@@ -1,1 +1,4 @@
-# face_recognition_python
+# MAC
+1. brew install opencv
+
+# LINUX
