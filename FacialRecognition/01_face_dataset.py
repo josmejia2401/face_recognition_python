@@ -19,7 +19,7 @@ cam.set(4, 480) # set video height
 face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
 # For each person, enter one numeric face id
-face_id = input('\n enter user id end press <return> ==>  ')
+face_id = int(input('\n enter user id end press <return> ==>  '))
 
 print("\n [INFO] Initializing face capture. Look the camera and wait ...")
 # Initialize individual sampling face count
@@ -31,15 +31,17 @@ while(True):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     faces = face_detector.detectMultiScale(
         gray,
-        scaleFactor=1.1,
+        scaleFactor=1.2,
         minNeighbors=5,
-        minSize=(30, 30)
+        minSize=(100, 100),
+        flags=cv2.CASCADE_SCALE_IMAGE
     )
     for (x,y,w,h) in faces:
         img = cv2.rectangle(img, (x,y), (x+w,y+h), (255,0,0), 2)     
         count += 1
         # Save the captured image into the datasets folder
         cv2.imwrite("dataset/User." + str(face_id) + '.' + str(count) + ".jpg", gray[y:y+h,x:x+w])
+        cv2.rectangle(img,(x-50,y-50),(x+w+50,y+h+50),(225,0,0),2)
         cv2.imshow('image', img)
     k = cv2.waitKey(100) & 0xff # Press 'ESC' for exiting video
     if k == 27:
