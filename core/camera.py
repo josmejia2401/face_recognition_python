@@ -32,8 +32,8 @@ class Camera:#(threading.Thread):
 
     #lock = threading.Lock()
 
-    def __init__(self, cam_sel = 0, on_guard = False, show_gray_cam = False, show_difference_cam = False, capture_face = False):
-        #super().__init__()
+    def __init__(self, cam_id = 0, on_guard = False, show_gray_cam = False, show_difference_cam = False, capture_face = False):
+        super().__init__()
         #threading.Thread.__init__(self)
         self.font = cv2.FONT_HERSHEY_SIMPLEX
         self.show_difference_cam = show_difference_cam
@@ -41,37 +41,48 @@ class Camera:#(threading.Thread):
         self.capture_face = capture_face
         self.on_guard = on_guard
         #cam and dimentions
-        self.cam_sel = cam_sel
+        self.cam_id = cam_id
         self.cam = None
         self.fourcc = cv2.VideoWriter_fourcc(*'MJPG')
         self.fps = 20
         self.out = None
         self.frame1 = None
         self.frame2 = None
-        self.frame_prev = None
+
+        self._put_classifier()
+    #initialize
     
+    def initialize(self):
+        self._put_cam_video()
+        self._check_frames()
+
+    def _put_classifier(self):
+        path = get_data_xml('haarcascade_frontalface_default.xml')
+        self.faceCascade = cv2.CascadeClassifier(path)
+
+    def _put_cam_video(self):
+        if self.cam:
+            self.release()
+        self.cam = cv2.VideoCapture(self.cam_id)
+        fheight = int(self.cam.get(3))
+        fwidth = int(self.cam.get(4))
+        self.cam.set(3,fheight)
+        self.cam.set(4,fwidth)
+        self.out = cv2.VideoWriter('output.avi', self.fourcc, self.fps, (fheight, fwidth))
+    
+    def _check_frames(self):
+        if self.frame1 and self.frame2:
+            return
+        self.ret, self.frame1 = self.cam.read()
+        self.ret, self.frame2 = self.cam.read()
+        return
+
     def override_params(self, on_guard = False, show_gray_cam = False, show_difference_cam = False, capture_face = False):
         self.show_difference_cam = show_difference_cam
         self.show_gray_cam = show_gray_cam
         self.capture_face = capture_face
         self.on_guard = on_guard
 
-    def _put_cam_video(self):
-        if self.cam and self.cam.isOpened():
-            # Release cap resource
-            self.cam.release()
-            # Destroy all windows
-            cv2.destroyAllWindows()
-        
-        if self.out:
-            self.out.release()
-
-        self.cam = cv2.VideoCapture(self.cam_sel)
-        fheight = int(self.cam.get(3))
-        fwidth = int(self.cam.get(4))
-        self.cam.set(3,fheight)
-        self.cam.set(4,fwidth)
-        self.out = cv2.VideoWriter('output.avi', self.fourcc, self.fps, (fheight, fwidth))
 
     def _process_frame(self, frame1, frame2):
         # Difference between frame1(image) and frame2(image)
@@ -109,17 +120,6 @@ class Camera:#(threading.Thread):
         if self.on_guard == True:
             print("hay movimiento")
 
-    def _put_classifier(self):
-
-        path = get_data_xml('haarcascade_frontalface_default.xml')
-        self.faceCascade = cv2.CascadeClassifier(path)
-
-        #path = get_data_xml('haarcascade_eye.xml')
-        #self.eyeCascade = cv2.CascadeClassifier(path)
-
-        #path = get_data_xml('haarcascade_smile.xml')
-        #self.smileCascade = cv2.CascadeClassifier(path)
-
     def _process_face(self, frame):
         if self.faceCascade:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -131,20 +131,9 @@ class Camera:#(threading.Thread):
             )
             for (x,y,w,h) in faces:
                 cv2.rectangle(frame,(x,y),(x+w,y+h),(255,0,0),2)
-                #roi_gray = gray[y:y+h, x:x+w]
-                #roi_color = frame[y:y+h, x:x+w]
-                #eyes = self.eyeCascade.detectMultiScale(
-                #    roi_gray,
-                #    scaleFactor= 1.5,
-                #    minNeighbors=5,
-                #    minSize=(5, 5),
-                #    )
-                #for (ex, ey, ew, eh) in eyes:
-                #    cv2.rectangle(roi_color, (ex, ey), (ex + ew, ey + eh), (0, 255, 0), 2)
 
     def _record(self, ret, frame):
         if ret and ret == True:
-            # write the flipped frame
             self.out.write(frame)
 
     def _process_mov(self, ret, frame):
@@ -154,96 +143,88 @@ class Camera:#(threading.Thread):
     def get_cam(self):
         return self.cam
 
-    def _check_frames(self):
-        if self.frame1 and self.frame2:
-            return
-        self.ret, self.frame1 = self.cam.read()
-        self.ret, self.frame2 = self.cam.read()
-        return
-    
-    def get_frame_all(self):
+    def get_frame(self):
         frame_original = cv2.flip(self.frame1, 180)
         contours, hirarchy, frame_diff, frame_gray = self._process_frame(self.frame1, self.frame2)
         is_mov = False
         # making rectangle around moving object
         for contour in contours:
-            #
             (x, y, w, h) = cv2.boundingRect(contour)
             referenceArea = self._is_object(contour)
-            #
             if referenceArea is None:
                 continue
-            #
             text = "area {} px2".format(referenceArea)
             self._draw(self.frame1, x, y, w, h, text)
-            #
             is_mov = True
         frame_mov = self.frame1
-        ret, frame_jpeg = cv2.imencode('.jpg', frame_original)
-        #
         self.frame1 = self.frame2
-        # Read new frame2
-        self.ret, self.frame2 = self.cam.read()
-        return frame_diff, frame_gray, frame_mov, frame_original, frame_jpeg, self.ret, is_mov
-
-    def get_frame_streaming_normal(self):
-        ret, frame_original = self.cam.read()
-        frame_original = cv2.flip(frame_original, 180)
-        ret, frame_jpeg = cv2.imencode('.jpg', frame_original)
-        return ret, frame_jpeg
+        ret, self.frame2 = self.cam.read()
+        return frame_diff, frame_gray, frame_mov, frame_original, ret, is_mov
     
-    def get_frame_streaming_mov(self):
-        if not self.frame_prev:
-            self.ret_prev, self.frame_prev = self.cam.read()
-        self.ret_current, self.frame_current = self.cam.read()
-
-        frame_original = cv2.flip(self.frame_current, 180)
-        contours, hirarchy, frame_diff, frame_gray = self._process_frame(self.frame_prev, self.frame_current)
-        is_mov = False
-        for contour in contours:
-            (x, y, w, h) = cv2.boundingRect(contour)
-            referenceArea = self._is_object(contour)
-            if referenceArea is None:
-                continue
-            text = "area {} px2".format(referenceArea)
-            self._draw(self.frame_prev, x, y, w, h, text)
-            is_mov = True
-        
-        if is_mov:
-            ret, frame_jpeg = cv2.imencode('.jpg', self.frame_prev)
+    def get_stream(self, diff=False, gray=False, mov=False, original=True):
+        frame_diff, frame_gray, frame_mov, frame_original, ret, is_mov = self.get_frame()
+        if diff and frame_diff is not None:
+            ret, frame_jpeg = cv2.imencode('.jpg', frame_diff)
+            return ret, frame_jpeg, is_mov
+        elif gray and frame_gray is not None:
+            ret, frame_jpeg = cv2.imencode('.jpg', frame_gray)
+            return ret, frame_jpeg, is_mov
+        elif mov and frame_mov is not None:
+            ret, frame_jpeg = cv2.imencode('.jpg', frame_mov)
+            return ret, frame_jpeg, is_mov
+        elif original and frame_original is not None:
+            ret, frame_jpeg = cv2.imencode('.jpg', frame_original)
+            return ret, frame_jpeg, is_mov
         else:
-            ret, frame_jpeg = cv2.imencode('.jpg', self.frame_current)
-
-        self.frame_prev = self.frame_current
-        self.ret, self.frame_current = self.cam.read()
-        return ret, frame_jpeg, is_mov
-
+            return None, None, False
+    
     def release(self):
         try:
-            # Release cap resource
-            self.cam.release()
-            # Destroy all windows
+            self.frame1 = None
+            self.frame2 = None
+            if self.cam:
+                self.cam.release()
+                if self.cam.isOpened():
+                    self.cam.stop()
+            if self.out:
+                self.out.release()
             cv2.destroyAllWindows()
-            self.out.release()
+        except Exception as e:
+            print(e)
+        
+    def generated_stream(self):
+        while self.cam.isOpened():
+            ret, frame_jpeg, is_mov = self.get_stream(mov=True)
+            if frame_jpeg is not None:
+                yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + frame_jpeg.tobytes() + b'\r\n\r\n')
+            else:
+                yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + b'\r\n\r\n')
+
+    def __del__(self):
+        try:
+            print("saliendo")
+            self.frame1 = None
+            self.frame2 = None
+            if self.cam:
+                self.cam.release()
+                if self.cam.isOpened():
+                    self.cam.stop()
+            if self.out:
+                self.out.release()
+            cv2.destroyAllWindows()
         except Exception as e:
             print(e)
 
-    def initialize(self):
-        self._put_classifier()
-        self._put_cam_video()
-        self._check_frames()
 
 if __name__ == "__main__":
     a = Camera()
     a.initialize()
     cam = a.get_cam()
     while cam.isOpened():
-        frame_diff, frame_gray, frame_mov, frame_original, frame_jpeg, ret, is_mov = a.get_frame_all()
+        frame_diff, frame_gray, frame_mov, frame_original, frame_jpeg, ret, is_mov = a.get_frame()
         a._show('Normal Frame', frame_mov)
-
         if is_mov == True:
             a._process_mov(ret, frame_original)
-
         if cv2.waitKey(40) == 27:
             break
     a.release()
