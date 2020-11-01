@@ -7,12 +7,16 @@ def get_data_xml(name):
     x_path = os.path.join(str(c_path), 'data', 'xml')
     my_file = Path(x_path)
     con = 0
-    while not my_file.exists():
+    while my_file.exists() == False:
         if con > 3:
             break
         c_path = c_path.parent
-        x_path = os.path.join(str(c_path), 'output', 'audio')
+        x_path = os.path.join(str(c_path), 'data', 'xml')
         my_file = Path(x_path)
         con += 1
     
-    return os.path.join(str(my_file), name)
+    my_file = os.path.join(str(my_file), name)
+    my_file = Path(my_file)
+    if my_file.exists() == False:
+        raise Exception("not found")
+    return str(my_file)

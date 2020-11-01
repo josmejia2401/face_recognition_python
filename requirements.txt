@@ -2,3 +2,6 @@ opencv-python==4.4.0.44
 opencv-contrib-python==4.4.0.44
 Pillow==8.0.0
 imutils==0.5.3
+#network
+dnspython==1.16.0
+waitress==1.4.4
