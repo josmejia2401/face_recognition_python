@@ -5,3 +5,5 @@ imutils==0.5.3
 #network
 dnspython==1.16.0
 waitress==1.4.4
+#AWS
+boto3==1.16.9
