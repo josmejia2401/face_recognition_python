@@ -1,7 +1,7 @@
 #!/usr/bin/python3.8
 from core.kernel import Kernel
 
-_k = Kernel(src=0, name_src='src0')
+_k = Kernel(src=0)
 _k.initialize()
 
 def _video_feed() -> any:
@@ -9,7 +9,7 @@ def _video_feed() -> any:
         global _k
         if _k is None:
             _k = Kernel()
-        return _k.generated_stream_mov()
+        return _k.generated_stream()
     except ValueError as e:
         return str(e), 400
     except Exception as e:
