@@ -27,7 +27,7 @@ class Streaming:
 
     def __send(self, item: RecordDTO = None) -> None:
         try:
-            time.sleep(0.05)
+            time.sleep(0.05)#retraso
             jpeg = item.image.tobytes()
             jpeg = base64.b64encode(jpeg).decode('utf-8')
             image = "data:image/jpeg;base64,{}".format(jpeg)

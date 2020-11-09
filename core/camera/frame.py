@@ -87,11 +87,11 @@ class Frame:
         if referenceArea < int(self.SETTINGS["MIN_AREA_OBJECT"]):
             return None
         return referenceArea
-    
-    def get_stream_to_image(self, frame) -> any:
+    #320x240, 640x480, 800x480, 1024x600, 1024x768, 1440x900, 1920x1200, 1280x720, 1920x1080, 768x576, 720x480
+    def get_stream_to_image(self, frame, width = 640, heigth = 480) -> any:
         if frame is None:
             return False, None
-        frame = cv2.resize(frame, (600, 600))
+        frame = cv2.resize(frame, (width, heigth))
         ret, jpeg = cv2.imencode('.jpg', frame)
         return ret, jpeg
     
