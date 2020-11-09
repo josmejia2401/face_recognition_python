@@ -93,3 +93,5 @@ class Frame:
             return False, None
         ret, jpeg = cv2.imencode('.jpg', frame)
         return ret, jpeg
+    
+    

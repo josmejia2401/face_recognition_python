@@ -5,5 +5,7 @@ imutils==0.5.3
 #network
 dnspython==1.16.0
 waitress==1.4.4
+Flask-SocketIO==4.3.1
+socketIO-client==0.7.2
 #AWS
 boto3==1.16.9

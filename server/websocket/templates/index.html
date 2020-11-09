@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+        integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <title>Live Streaming Demonstration</title>
+    <script language="JavaScript">
+        window.onbeforeunload = function (e) {
+            var message = "Your confirmation message goes here.",
+                e = e || window.event;
+            // For IE and Firefox
+            if (e) {
+                e.returnValue = message;
+            }
+            // For Safari
+            return message;
+        };
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8  offset-lg-2">
+                <h3 class="mt-5">Live Streaming</h3>
+                <p id="streamer-text"></p>
+                    <img id="streamer-image" src="" width="100%">
+            </div>
+        </div>
+    </div>
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"
+        integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+    <script type="text/javascript" charset="utf-8">
+        /*
+        var socket = io("http://localhost:5000", {
+            'forceNew': true
+        });
+        socket.on('connect', function () {
+            socket.emit('on_frame', 'src', 'frame');
+        });
+
+        socket.on('evt_frame', function (src, frame) {
+            console.log("evt_frame", src, frame)
+        });
+        */
+
+        document.addEventListener("DOMContentLoaded", function (event) {
+            const image_elem = document.getElementById("streamer-image");
+            const text_elem = document.getElementById("streamer-text");
+
+
+            var socket = io.connect('http://localhost:5000', {
+                reconnection: false,
+                forceNew: true
+            });
+
+            socket.on('connect', () => {
+                console.log('Connected');
+                
+                //socket.emit('on_frame', {'image': true, 'source': 1, 'buff': ""})
+
+            });
+
+            socket.on('disconnect', () => {
+                console.log('Disconnected');
+            });
+
+            socket.on('connect_error', (error) => {
+                console.log('Connect error! ' + error);
+            });
+
+            socket.on('connect_timeout', (error) => {
+                console.log('Connect timeout! ' + error);
+            });
+
+            socket.on('error', (error) => {
+                console.log('Error! ' + error);
+            });
+            
+            // Update image and text data based on incoming data messages
+            socket.on('evt_frame', (data) => {
+                if (data && data.image && data.buff) {
+                    image_elem.src = data.buff;
+                    text_elem.innerHTML = data.source;
+                }
+            });
+        });
+
+    </script>
+</html>

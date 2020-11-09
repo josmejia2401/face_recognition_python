@@ -7,23 +7,21 @@ import cv2
 import datetime
 import threading
 import queue
-
+import time
 
 class Record:
 
-    def __init__(self):
+    def __init__(self, fwidth = None, fheight = None):
         super().__init__()
-        self.q = queue.Queue()
-        self.fheight = None
-        self.fwidth = None
+        self.q = queue.Queue(maxsize=2000)
+        self.fheight = int(fheight)
+        self.fwidth = int(fwidth)
         self.cont_frame = 0
         self.started = False
-        self.stoped = False
         self.cont_frame_time_out = 0
+        self.__build()
 
-    def initialize(self, fwidth, fheight):
-        self.fheight = fheight
-        self.fwidth = fwidth
+    def __build(self):
         self.SETTINGS = get_settings_record()
         self.MAX_TIME_SEG = int(self.SETTINGS["MAX_TIME_SEG"])
         self.FPS = int(self.SETTINGS["FPS"])
@@ -32,7 +30,10 @@ class Record:
     def __put_video_writter(self, src):
         time_string = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-        self.out = cv2.VideoWriter('output_{}_{}.avi'.format(src, time_string), fourcc, self.FPS, (self.fheight, self.fwidth))
+        filename = 'output_{}_{}.avi'.format(src, time_string)
+        frameSize = (self.fheight, self.fwidth)
+        fps = self.FPS
+        self.out = cv2.VideoWriter(filename, fourcc, fps, frameSize)
 
     #otorga 10s adicionales despuès de un movimiento,  es decir, si algo se muevo graba 10s mas esperando que se vuelva a mover.
     def __continue_record(self, item: RecordDTO = None):
@@ -68,12 +69,14 @@ class Record:
             print(e)
 
     def _worker(self):
-        while self.q.empty() == False and self.stoped == False:
-            item = self.q.get()
-            self._process_worker(item)
-            self.q.task_done()
+        while self.started == True:
+            if self.q.empty() == False:
+                item = self.q.get()
+                self._process_worker(item)
+                self.q.task_done()
+            else:
+                time.sleep(1.5)
         self.started = False
-        self.stoped = False
 
     def put_nowait(self, item: RecordDTO = None) -> None:
         self.q.put_nowait(item)
@@ -95,11 +98,12 @@ class Record:
         print('All work completed')
 
     def stop(self):
-        self.stoped = True
+        self.started = True
         self.release()
 
     def release(self):
-        self.out.release()
+        if self.out:
+            self.out.release()
         self.cont_frame = 0
         self.cont_frame_time_out = 0
 
