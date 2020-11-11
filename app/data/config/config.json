@@ -1,0 +1,22 @@
+{
+    "ALARM": {
+        "PHONE_NUMBER": "310XXXXXXX",
+        "INDICATOR": "+57",
+        "MAX_MOV": 3,
+        "MAX_MSG": 200,
+        "ON_GUARD": 1,
+        "DEFAULT_MESSAGE": "SE HA DETECTADO UN MOVIMIENTO"
+    },
+    "AWS": {
+        "ACCES_KEY": "",
+        "SECRET_KEY": "",
+        "REGION_NAME": "us-east-1"
+    },
+    "CAMERA": {
+        "MIN_AREA_OBJECT": 1000
+    },
+    "RECORD": {
+        "FPS": 20,
+        "MAX_TIME_SEG": 30
+    }
+}

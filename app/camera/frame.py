@@ -3,13 +3,13 @@
 # OpenCV 4.2, Raspberry pi 3/3b/4b - test on macOS
 import cv2
 import time
-from utils.settings import get_settings_camera
+from utils.settings import get_config
 
 class Frame:
 
     def __init__(self):
         super().__init__()
-        self.SETTINGS = get_settings_camera()
+        self.CONFIG = get_config()
         self.font = cv2.FONT_HERSHEY_SIMPLEX
     
     def __get_frame_diff(self, frame1, frame2):
@@ -84,7 +84,7 @@ class Frame:
 
     def __is_object(self, contour):
         referenceArea = cv2.contourArea(contour)
-        if referenceArea < int(self.SETTINGS["MIN_AREA_OBJECT"]):
+        if referenceArea < int(self.CONFIG["CAMERA"]["MIN_AREA_OBJECT"]):
             return None
         return referenceArea
     #320x240, 640x480, 800x480, 1024x600, 1024x768, 1440x900, 1920x1200, 1280x720, 1920x1080, 768x576, 720x480

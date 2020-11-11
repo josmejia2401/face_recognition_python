@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #!/usr/bin/python3.8
 # OpenCV 4.2, Raspberry pi 3/3b/4b - test on macOS
-from camera.camera_async import CameraAsync
+from camera.camera import CameraAsync
 
 class Kernel:
 

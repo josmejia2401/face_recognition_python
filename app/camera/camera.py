@@ -6,7 +6,7 @@ from threading import Thread, Lock
 import time
 #internal
 from camera.frame import Frame
-from camera.record import Record
+from camera.record import RecordAndAlert
 from camera.streaming import Streaming
 from camera.type_cam import TypeCam
 from dto.record import RecordDTO
@@ -39,10 +39,11 @@ class CameraAsync:
     
     def initialize(self) -> None:
         self.__STREAMING = Streaming()
+        self.__STREAMING.initialize()
         self.__put_stream__()
         width, height = self.get_dimentions()
         self.__FRAME = Frame()
-        self.__RECORD = Record(width, height)
+        self.__RECORD = RecordAndAlert(width, height)
         
     def get_started(self) -> bool:
         return self.started
@@ -97,6 +98,8 @@ class CameraAsync:
             self.started = False
             time.sleep(0.9)
             self.thread.join()
+            self.__RECORD.stop()
+            self.__STREAMING.stop()
             self.release()
             self.grabbed1, self.frame1 = None, None
             self.grabbed2, self.frame2 = None, None

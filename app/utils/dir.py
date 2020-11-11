@@ -22,16 +22,16 @@ def get_data_xml(name):
     return str(my_file)
 
 
-def get_data_settings(name):
+def get_data_config(name):
     c_path = current_path
-    x_path = os.path.join(str(c_path), 'data', 'settings')
+    x_path = os.path.join(str(c_path), 'config', 'config')
     my_file = Path(x_path)
     con = 0
     while my_file.exists() == False:
         if con > 3:
             break
         c_path = c_path.parent
-        x_path = os.path.join(str(c_path), 'data', 'settings')
+        x_path = os.path.join(str(c_path), 'data', 'config')
         my_file = Path(x_path)
         con += 1
     

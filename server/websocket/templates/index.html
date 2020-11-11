@@ -35,8 +35,7 @@
     </div>
 </body>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"
-        integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
     <script type="text/javascript" charset="utf-8">
         /*
         var socket = io("http://localhost:5000", {
@@ -57,31 +56,25 @@
 
 
             var socket = io.connect('http://localhost:5000', {
-                reconnection: false,
-                forceNew: true
+                reconnection: true,
+                forceNew: false
             });
 
             socket.on('connect', () => {
                 console.log('Connected');
-                
-                //socket.emit('on_frame', {'image': true, 'source': 1, 'buff': ""})
-
+                socket.emit('on_subscriber')
             });
 
             socket.on('disconnect', () => {
                 console.log('Disconnected');
             });
 
-            socket.on('connect_error', (error) => {
-                console.log('Connect error! ' + error);
-            });
-
-            socket.on('connect_timeout', (error) => {
-                console.log('Connect timeout! ' + error);
-            });
-
             socket.on('error', (error) => {
                 console.log('Error! ' + error);
+            });
+
+            socket.on('on_process_frame', (data) => {
+                console.log(data)
             });
             
             // Update image and text data based on incoming data messages
