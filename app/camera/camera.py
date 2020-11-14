@@ -5,21 +5,17 @@ import cv2
 from threading import Thread, Lock
 import time
 #internal
-from camera.frame import Frame
-from camera.record import RecordAndAlert
-from camera.streaming import Streaming
-from camera.type_cam import TypeCam
-from dto.record import RecordDTO
+from utils.settings import get_config
+from dto.record import FrameDTO, ConfigDTO
+from camera.process_frame import ProcessFrame
 
 class CameraAsync:
 
-    def __init__(self, src=0, name='0', width=None, height=None):
+    def __init__(self, source=0, name='thread-stream-0'):
         super().__init__()
         self.name = name
-        self.src = src
-        self.width=width
-        self.height = height
-        #others
+        self.source = source 
+        self.__config = ConfigDTO(get_config())
         self.started = False
         self.read_lock = Lock()
         self.stream = None
@@ -27,30 +23,21 @@ class CameraAsync:
         self.grabbed2, self.frame2 = None, None
         self.thread = None
         
-    def __put_stream__(self) -> None:
+    def __build(self) -> None:
         if self.stream and self.stream.isOpened():
             return
-        self.stream = cv2.VideoCapture(self.src)
-        if self.width is None or self.height is None:
-            self.height = int(self.stream.get(3))
-            self.width = int(self.stream.get(4))
-        self.stream.set(3, self.height)
-        self.stream.set(4, self.width)
+        self.stream = cv2.VideoCapture(self.source)
+        if not self.__config.camera.dimHeight or not self.__config.camera.dimWidth:
+            self.__config.camera.dimHeight = int(self.stream.get(3))
+            self.__config.camera.dimWidth = int(self.stream.get(4))
+        self.__process_frame = ProcessFrame(self.__config)
     
     def initialize(self) -> None:
-        self.__STREAMING = Streaming()
-        self.__STREAMING.initialize()
-        self.__put_stream__()
-        width, height = self.get_dimentions()
-        self.__FRAME = Frame()
-        self.__RECORD = RecordAndAlert(width, height)
+        self.__build()
         
     def get_started(self) -> bool:
         return self.started
     
-    def get_dimentions(self):
-        return self.width, self.height
-
     def start(self) -> None:
         if self.started == True:
             return
@@ -61,11 +48,11 @@ class CameraAsync:
     def __update(self) -> None:
         while self.started == True and self.stream.isOpened() == True:
             (grabbed, frame) = self.stream.read()
-            try:
-                self.read_lock.acquire()
+            while grabbed == False:
+                (grabbed, frame) = self.stream.read()
+                time.sleep(0.1)
+            with self.read_lock:
                 self.__process(grabbed, frame)
-            finally:
-                self.read_lock.release()
     
     def __process(self, grabbed, frame):
         if self.frame1 is None or self.frame2 is None:
@@ -73,12 +60,8 @@ class CameraAsync:
         else:
             self.grabbed1, self.frame1 = self.grabbed2, self.frame2
         self.grabbed2, self.frame2 = grabbed, frame
-        grabbed, frame, is_mov = self.__FRAME.get_frame_normal(self.frame1, self.frame2)
-        _, image = self.__FRAME.get_stream_to_image(frame)
-        _r = RecordDTO(self.src, TypeCam.NORMAL, is_mov, frame, image)
-        self.__RECORD.put_nowait(_r)
-        self.__STREAMING.put_nowait(_r)
-
+        frame_dto = FrameDTO(self.source, self.frame1, self.frame2)
+        self.__process_frame.put_nowait(frame_dto)
         
     def read(self) -> any:
         try:
@@ -98,42 +81,25 @@ class CameraAsync:
             self.started = False
             time.sleep(0.9)
             self.thread.join()
-            self.__RECORD.stop()
-            self.__STREAMING.stop()
             self.release()
-            self.grabbed1, self.frame1 = None, None
-            self.grabbed2, self.frame2 = None, None
-            self.stream = None
+            self.__process_frame.stop()
         except Exception as e:
             print(e)
 
     def release(self):
         if self.stream:
             self.stream.release()
-    
-    @staticmethod
-    def list_devices():
-        index = 0
-        arr = []
-        cap = None
-        while True:
-            try:
-                cap = cv2.VideoCapture(index)
-                if not cap.read()[0]:
-                    break
-                else:
-                    arr.append(index)
-                cap.release()
-                index += 1
-            except Exception as e:
-                print(e)
-                cap.release()
-        return arr
 
     def __exit__(self, exc_type, exc_value, traceback):
         print("exit")
-        self.stop()
     
     def __del__(self):
-        print("del")
-        self.stop()
+        self.started = None
+        self.grabbed1, self.frame1 = None, None
+        self.grabbed2, self.frame2 = None, None
+        self.stream = None
+        self.name = None
+        self.source = None
+        self.__config = None
+        self.read_lock = None
+        self.thread = None

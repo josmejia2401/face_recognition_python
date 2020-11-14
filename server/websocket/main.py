@@ -30,14 +30,14 @@ def is_process_frame():
     if len(USERS_ONLINE) > 1:
         return True
     else:
-        return False
+        return True
 
 @socketio.on('on_message')
 def handle_message(data):
     send(data, json=True)
 
 @socketio.on('on_frame')
-@is_connected
+#@is_connected
 def handle_on_frame(data):
     if is_process_frame():
         emit('evt_frame', data, json=True, broadcast=True)

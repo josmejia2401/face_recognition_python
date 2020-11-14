@@ -5,14 +5,13 @@ from camera.camera import CameraAsync
 
 class Kernel:
 
-    def __init__(self, src=0):
+    def __init__(self):
         super().__init__()
-        self.src = src
-        self.__CAMERA = CameraAsync(src=self.src, name=str(self.src))
+        self.__CAMERA = CameraAsync()
 
     def initialize(self):
         self.__CAMERA.initialize()
         self.__CAMERA.start()
 
-    def stop(self, src=0) -> None:
+    def stop(self) -> None:
         self.__CAMERA.stop()

@@ -3,15 +3,23 @@
 # OpenCV 4.2, Raspberry pi 3/3b/4b - test on macOS
 import cv2
 import time
-from utils.settings import get_config
+import copy
+from dto.record import ConfigDTO
 
 class Frame:
 
-    def __init__(self):
+    def __init__(self, config: ConfigDTO = None):
         super().__init__()
-        self.CONFIG = get_config()
+        self.__config = copy.deepcopy(config)
         self.font = cv2.FONT_HERSHEY_SIMPLEX
     
+    #320x240, 640x480, 800x480, 1024x600, 1024x768, 1440x900, 1920x1200, 1280x720, 1920x1080, 768x576, 720x480
+    def resize(self, frame) -> any:
+        if frame is None:
+            return False, None
+        frame = cv2.resize(frame, (self.__config.camera.dimWidth, self.__config.camera.dimHeight))
+        return frame
+
     def __get_frame_diff(self, frame1, frame2):
         # Difference between frame1(image) and frame2(image)
         diff = cv2.absdiff(frame1, frame2)
@@ -38,45 +46,34 @@ class Frame:
         return contours, hirarchy
 
     def get_frame_diff(self, frame1, frame2):
-        contours, hirarchy = self.__get_contours(frame1, frame2)
-        is_mov = False
-        # making rectangle around moving object
-        for contour in contours:
-            (x, y, w, h) = cv2.boundingRect(contour)
-            referenceArea = self.__is_object(contour)
-            if referenceArea is None:
-                continue
-            is_mov = True
-            break
         grabbed, thresh = self.__get_frame_diff(frame1, frame2)
-        return grabbed, thresh, is_mov
+        return True, thresh
 
     def get_frame_normal(self, frame1, frame2):
-        frame = cv2.flip(frame1, 180)
-        contours, hirarchy = self.__get_contours(frame1, frame2)
-        is_mov = False
-        # making rectangle around moving object
-        for contour in contours:
-            (x, y, w, h) = cv2.boundingRect(contour)
-            referenceArea = self.__is_object(contour)
-            if referenceArea is None:
-                continue
-            is_mov = True
-            break
-        return True, frame, is_mov
+        #frame = cv2.flip(frame1, 180)
+        return True, frame1
 
     def get_frame_mov(self, frame1, frame2):
-        contours, hirarchy = self.__get_contours(frame1, frame2)
-        is_mov = False
-        # making rectangle around moving object
+        contours, _ = self.__get_contours(frame1, frame2)
         for contour in contours:
             (x, y, w, h) = cv2.boundingRect(contour)
             referenceArea = self.__is_object(contour)
             if referenceArea is None:
                 continue
             self.__draw(frame1, x, y, w, h, "movimiento")
+        return True, frame1
+    
+    def is_movement(self, frame1, frame2):
+        contours, _ = self.__get_contours(frame1, frame2)
+        is_mov = False
+        for contour in contours:
+            (x, y, w, h) = cv2.boundingRect(contour)
+            referenceArea = self.__is_object(contour)
+            if referenceArea is None:
+                continue
             is_mov = True
-        return True, frame1, is_mov
+            break
+        return is_mov
 
     def __draw(self, frame, x, y, w, h, text):
         cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 255), 2)
@@ -84,14 +81,13 @@ class Frame:
 
     def __is_object(self, contour):
         referenceArea = cv2.contourArea(contour)
-        if referenceArea < int(self.CONFIG["CAMERA"]["MIN_AREA_OBJECT"]):
+        if referenceArea < self.__config.general.minAreaObject:
             return None
         return referenceArea
     #320x240, 640x480, 800x480, 1024x600, 1024x768, 1440x900, 1920x1200, 1280x720, 1920x1080, 768x576, 720x480
-    def get_stream_to_image(self, frame, width = 640, heigth = 480) -> any:
+    def frame_to_image(self, frame) -> any:
         if frame is None:
             return False, None
-        frame = cv2.resize(frame, (width, heigth))
         ret, jpeg = cv2.imencode('.jpg', frame)
         return ret, jpeg
     
