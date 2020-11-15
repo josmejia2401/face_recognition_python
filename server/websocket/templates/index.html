@@ -37,52 +37,38 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" integrity="sha256-yr4fRk/GU1ehYJPAs8P4JlTgu0Hdsp4ZKrx8bDEDC3I=" crossorigin="anonymous"></script>
     <script type="text/javascript" charset="utf-8">
-        /*
-        var socket = io("http://localhost:5000", {
-            'forceNew': true
-        });
-        socket.on('connect', function () {
-            socket.emit('on_frame', 'src', 'frame');
-        });
-
-        socket.on('evt_frame', function (src, frame) {
-            console.log("evt_frame", src, frame)
-        });
-        */
 
         document.addEventListener("DOMContentLoaded", function (event) {
             const image_elem = document.getElementById("streamer-image");
             const text_elem = document.getElementById("streamer-text");
 
-
-            var socket = io.connect('http://localhost:5000', {
+            var socket = io.connect('http://localhost:5000?username=web', {
                 reconnection: true,
                 forceNew: false
             });
 
             socket.on('connect', () => {
                 console.log('Connected');
-                socket.emit('on_subscriber')
+                socket.emit('on_subscriber', {"username" : "web"});
             });
 
             socket.on('disconnect', () => {
                 console.log('Disconnected');
             });
 
-            socket.on('error', (error) => {
-                console.log('Error! ' + error);
-            });
-
-            socket.on('on_process_frame', (data) => {
+            socket.on('on_transmit_frame', (data) => {
                 console.log(data)
             });
             
-            // Update image and text data based on incoming data messages
             socket.on('evt_frame', (data) => {
                 if (data && data.image && data.buff) {
                     image_elem.src = data.buff;
                     text_elem.innerHTML = data.source;
                 }
+            });
+
+            socket.on('error', (error) => {
+                console.log('Error! ' + error);
             });
         });
 
