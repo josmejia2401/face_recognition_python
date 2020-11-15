@@ -13,7 +13,8 @@
     "AWS": {
         "ACCESS_KEY": "",
         "SECRET_KEY": "",
-        "REGION_NAME": "us-east-1"
+        "REGION_NAME": "us-east-1",
+        "CLIENT": "sns"
     },
     "CAMERA": {
         "DIM_WIDTH": 640,
@@ -23,5 +24,10 @@
     "RECORD": {
         "FPS": 10.0,
         "MAX_TIME_OUT_SEG": 30
+    },
+    "STREAMING": {
+        "HOST": "0.0.0.0",
+        "PORT": 5000,
+        "USER": "SUCAM"
     }
 }

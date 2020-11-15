@@ -31,6 +31,7 @@ class AwsDTO:
         self.accessKey = str(data_json["ACCESS_KEY"])
         self.secretKey = str(data_json["SECRET_KEY"])
         self.regionName = str(data_json["REGION_NAME"])
+        self.client = str(data_json["CLIENT"])
 
 class CameraDTO:
     def __init__(self, data_json = {}):
@@ -43,6 +44,12 @@ class RecordDTO:
         self.fps = float(data_json["FPS"])
         self.maxTimeOutSeg = int(data_json["MAX_TIME_OUT_SEG"])
 
+class StreamingDTO:
+    def __init__(self, data_json = {}):
+        self.host = str(data_json["HOST"])
+        self.port = int(data_json["PORT"])
+        self.user = str(data_json["USER"])
+
 class ConfigDTO:
     def __init__(self, data_json = {}):
         self.general = GeneralDTO(data_json["GENERAL"])
@@ -50,3 +57,4 @@ class ConfigDTO:
         self.aws = AwsDTO(data_json["AWS"])
         self.camera = CameraDTO(data_json["CAMERA"])
         self.record = RecordDTO(data_json["RECORD"])
+        self.streaming = StreamingDTO(data_json["STREAMING"])

@@ -12,24 +12,34 @@ import copy
 #https://pypi.org/project/socketIO-client/
 class Streaming:
 
-    def __init__(self, config: ConfigDTO = None):
+    def __init__(self, config: ConfigDTO = None, wait_for_connection = True):
         super().__init__()
         self.__config = copy.deepcopy(config)
-        self.q = queue.Queue(maxsize=2000)
+        self.wait_for_connection = wait_for_connection
+        self.q = queue.Queue(maxsize=1000)
         self.started = False
         self.socketIO = None
         self.is_send_frame = 0
-        self.socketIO = SocketIO('0.0.0.0', 5000, LoggingNamespace)
+
+    def __build(self):
+        self.socketIO = SocketIO(host=self.__config.streaming.host, 
+            port=self.__config.streaming.port, 
+            Namespace=LoggingNamespace, 
+            wait_for_connection=self.wait_for_connection)
 
     def __check_socket(self):
-        if self.socketIO.connected == False:
+        if self.socketIO and self.socketIO.connected == False:
             self.socketIO.connect()
 
     def initialize(self):
-        self.__check_socket()
-        self.__subscriber()
+        try:
+            self.__build()
+            self.__check_socket()
+            self.__subscriber()
+        except Exception as e:
+            print(e)
 
-    def on_bbb_response(self, *args):
+    def __on_bbb_response(self, *args):
         print('on_bbb_response', args)
 
     def __send(self, item: StreamDTO = None) -> None:
@@ -38,16 +48,17 @@ class Streaming:
             jpeg = item.image.tobytes()
             jpeg = base64.b64encode(jpeg).decode('utf-8')
             image = "data:image/jpeg;base64,{}".format(jpeg)
-            item = {'image': True, 'source': item.source, 'buff': image, 'user': 'sucam'}
+            item = {'image': True, 'source': item.source, 'buff': image, 'user': self.__config.streaming.user}
             self.__check_socket()
-            self.socketIO.emit('on_frame', item, callback=self.on_bbb_response)
+            if self.socketIO:
+                self.socketIO.emit('on_frame', item, callback=self.__on_bbb_response)
         except Exception as e:
             print(e)
 
     def _worker(self):
         while self.started == True and self.q.empty() == False:
             item = self.q.get()
-            if self.is_send_frame == 0:
+            if self.is_send_frame == 1:
                 self.__send(item)
             else:
                 time.sleep(1.5)
@@ -55,12 +66,14 @@ class Streaming:
         self.started = False
 
     def put_nowait(self, item: StreamDTO = None) -> None:
-        self.q.put_nowait(item)
-        self.run()
+        if self.is_send_frame == 1:
+            self.q.put_nowait(item)
+            self.run()
 
     def put(self, item: StreamDTO = None, block=True, timeout=None) -> None:
-        self.q.put(item, block, timeout)
-        self.run()
+        if self.is_send_frame == 1:
+            self.q.put(item, block, timeout)
+            self.run()
 
     def run(self) -> None:
         if self.started == True:
@@ -91,10 +104,8 @@ class Streaming:
         self.__unsuscriber()
 
     def __del__(self):
-        self.stop()
         self.__config = None
         self.q = None
         self.started = None
         self.socketIO = None
         self.is_send_frame = None
-        self.socketIO = None

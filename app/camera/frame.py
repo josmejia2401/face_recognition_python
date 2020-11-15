@@ -84,7 +84,7 @@ class Frame:
         if referenceArea < self.__config.general.minAreaObject:
             return None
         return referenceArea
-    #320x240, 640x480, 800x480, 1024x600, 1024x768, 1440x900, 1920x1200, 1280x720, 1920x1080, 768x576, 720x480
+
     def frame_to_image(self, frame) -> any:
         if frame is None:
             return False, None

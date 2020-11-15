@@ -26,11 +26,12 @@ class CameraAsync:
     def __build(self) -> None:
         if self.stream and self.stream.isOpened():
             return
+        self.__process_frame = ProcessFrame(self.__config)
+        self.__process_frame.initialize()
         self.stream = cv2.VideoCapture(self.source)
         if not self.__config.camera.dimHeight or not self.__config.camera.dimWidth:
             self.__config.camera.dimHeight = int(self.stream.get(3))
             self.__config.camera.dimWidth = int(self.stream.get(4))
-        self.__process_frame = ProcessFrame(self.__config)
     
     def initialize(self) -> None:
         self.__build()
@@ -50,9 +51,8 @@ class CameraAsync:
             (grabbed, frame) = self.stream.read()
             while grabbed == False:
                 (grabbed, frame) = self.stream.read()
-                time.sleep(0.1)
-            with self.read_lock:
-                self.__process(grabbed, frame)
+            #with self.read_lock:
+            self.__process(grabbed, frame)
     
     def __process(self, grabbed, frame):
         if self.frame1 is None or self.frame2 is None:
@@ -80,7 +80,8 @@ class CameraAsync:
         try:
             self.started = False
             time.sleep(0.9)
-            self.thread.join()
+            if self.thread:
+                self.thread.join()
             self.release()
             self.__process_frame.stop()
         except Exception as e:
