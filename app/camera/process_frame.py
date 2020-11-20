@@ -55,7 +55,7 @@ class ProcessFrame:
                 item = self.q.get()
                 self.__process(item)
                 self.q.task_done()
-                time.sleep(0.1)
+                #time.sleep(0.1)
 
     def initialize(self):
         self.__streaming.initialize()

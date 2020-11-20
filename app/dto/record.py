@@ -48,7 +48,8 @@ class StreamingDTO:
     def __init__(self, data_json = {}):
         self.host = str(data_json["HOST"])
         self.port = int(data_json["PORT"])
-        self.user = str(data_json["USER"])
+        self.username = str(data_json["USERNAME"])
+        self.password = str(data_json["PASSWORD"])
 
 class ConfigDTO:
     def __init__(self, data_json = {}):

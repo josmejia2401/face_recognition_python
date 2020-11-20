@@ -28,6 +28,7 @@
     "STREAMING": {
         "HOST": "0.0.0.0",
         "PORT": 5000,
-        "USER": "SUCAM"
+        "USERNAME": "SUCAM",
+        "PASSWORD": "SUCAM"
     }
 }
