@@ -26,9 +26,32 @@ def on_connect():
             user_dto = UserDTO(user_json)
             global manage_session
             user_find = manage_session.add_username(user_dto, session_id)
-            print("cliente conectado", user_find)
             length_users = manage_session.get_length_users()
-            send({'message': str(length_users), 'operation': 'broadcasting'}, broadcast=True, json=False, include_self=True)
+            emit('stream_video', str(length_users), broadcast=True, json=True, include_self=True)
+    except KeyError as e:
+        disconnect(session_id)
+        print(e)
+    except Exception as e:
+        disconnect(session_id)
+        print(e)
+    except:
+        pass
+
+@socketio.on('subscriber')
+def on_subscriber():
+    session_id = request.sid
+    try:
+        username = request.args.get('username')
+        password = request.args.get('password')
+        if username is None or password is None:
+            disconnect(session_id)
+        else:
+            user_json = {"username": username, "password": password}
+            user_dto = UserDTO(user_json)
+            global manage_session
+            user_find = manage_session.add_username(user_dto, session_id)
+            length_users = manage_session.get_length_users()
+            emit('stream_video', str(length_users), broadcast=True, json=True, include_self=True)
     except KeyError as e:
         disconnect(session_id)
         print(e)
@@ -73,7 +96,7 @@ def on_unsubscriber():
                 disconnect(s)
             user_find.sessions = []
             length_users = manage_session.get_length_users()
-            send({'message': str(length_users), 'operation': 'broadcasting'}, broadcast=True, json=False, include_self=True)
+            emit('stream_video', str(length_users), broadcast=True, json=True, include_self=True)
     except KeyError as e:
         disconnect(session_id)
         print(e)
@@ -83,21 +106,12 @@ def on_unsubscriber():
     except:
         pass
 
-@socketio.on('event_frame')
-def event_frame(data):
-    print("event_frame", data)
-    emit('handle_frame', data, json=True, broadcast=True)
-
-@socketio.on('event_message')
-def event_message(data):
-    print("event_message", data)
-    emit('handle_message', data, json=True, broadcast=True)
-
+@socketio.on('cv-data')
+def cv_data(data):
+    emit('handle-cv-data', data, json=True, broadcast=True)
 
 def run():
-    socketio.run(app, host='0.0.0.0', port='5000',
-                 debug=True, use_reloader=True)
-
+    socketio.run(app, host='0.0.0.0', port='5000', debug=True, use_reloader=True)
 
 if __name__ == '__main__':
     run()

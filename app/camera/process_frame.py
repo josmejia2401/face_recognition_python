@@ -40,22 +40,27 @@ class ProcessFrame:
             stream_dto = StreamDTO(item.source, new_frame, self.__config.camera.cameraType, is_mov, image)
             self.__record.record(stream_dto)
             self.__alert.alert(stream_dto)
-            self.__streaming.put_nowait(stream_dto)
+            self.__streaming.send_data(stream_dto)
         except Exception as e:
             print("__process", e)
 
     def __worker(self):
         while self.started == True:
-            if self.q.empty() == True:
-                with self.condition:
-                    self.waiting = True
-                    self.condition.wait()
-                    self.waiting = False
-            else:
-                item = self.q.get()
-                self.__process(item)
-                self.q.task_done()
-                #time.sleep(0.1)
+            try:
+                if self.q.empty() == True:
+                    pass
+                    #with self.condition:
+                    #    self.waiting = True
+                    #    self.condition.wait()
+                    #    self.waiting = False
+                else:
+                    item = self.q.get()
+                    self.__process(item)
+                    self.q.task_done()
+                    if self.__config.general.delay > 0:
+                        print("sleep")
+                        time.sleep(self.__config.general.delay)
+            except: pass
 
     def initialize(self):
         self.__streaming.initialize()

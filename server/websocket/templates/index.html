@@ -37,26 +37,17 @@
 
             socket.on('connect', () => {
                 console.log('Connected');
-                socket.emit('event_message', "1");
             });
 
             socket.on('disconnect', () => {
                 console.log('Disconnected');
             });
 
-            socket.on('message', (data) => {
-                console.log("message", data)
+            socket.on('stream_video', (data) => {
+                console.log('stream_video', data);
             });
 
-            socket.on('handle_message', (data) => {
-                console.log("handle_message", data)
-            });
-
-            socket.on('on_message', (data) => {
-                console.log("on_message", data)
-            });
-            
-            socket.on('handle_frame', (data) => {
+            socket.on('handle-cv-data', (data) => {
                 if (data && data.image && data.buff) {
                     image_elem.src = data.buff;
                     text_elem.innerHTML = data.source;

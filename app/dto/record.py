@@ -18,6 +18,7 @@ class GeneralDTO:
         self.maxMovements = int(data_json["MAX_MOVEMENTS"])
         self.onGuard = int(data_json["ON_GUARD"])
         self.minAreaObject = int(data_json["MIN_AREA_OBJECT"])
+        self.delay = float(data_json["DELAY"])
 
 class AlarmDTO:
     def __init__(self, data_json = {}):

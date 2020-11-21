@@ -8,10 +8,64 @@ import queue
 import base64
 import time
 import copy
+from socketIO_client import SocketIO, BaseNamespace
 
+start_broadcasting = 0
 
+class Namespace(BaseNamespace):
 
+    def message(self, data):
+        try:
+            print("type", type(data))
+            if isinstance(data, dict):
+                if "operation" in data and data["operation"] == 'broadcasting':
+                    global start_broadcasting
+                    start_broadcasting = int(data["message"])
+                print("message", data)
+        except Exception as e:
+            pass
 
+    def on_message(self, data):
+        try:
+            print("type", type(data))
+            if isinstance(data, dict):
+                if "operation" in data and data["operation"] == 'broadcasting':
+                    global start_broadcasting
+                    start_broadcasting = int(data["message"])
+                print("on_message", data)
+        except Exception as e:
+            pass
+    
+    def on_handle_message(self, data):
+        try:
+            print("type", type(data))
+            if isinstance(data, dict):
+                if "operation" in data and data["operation"] == 'broadcasting':
+                    global start_broadcasting
+                    start_broadcasting = int(data["message"])
+            print("on_handle_message", data)
+        except Exception as e:
+            pass
+
+    def handle_message(self, data):
+        try:
+            print("type", type(data))
+            if isinstance(data, dict):
+                if "operation" in data and data["operation"] == 'broadcasting':
+                    global start_broadcasting
+                    start_broadcasting = int(data["message"])
+            print("handle_message", data)
+        except Exception as e:
+            pass
+
+    def on_connect(self):
+        print('[Connected]')
+
+    def on_reconnect(self):
+        print('[Reconnected]')
+
+    def on_disconnect(self):
+        print('[Disconnected]')
 
 #https://pypi.org/project/socketIO-client/
 class Streaming:
@@ -25,16 +79,12 @@ class Streaming:
         self.started = False
         self.waiting = False
         self.socketIO = None
-        self.is_send_frame = 0
 
     def __build(self):
-        self.socketIO = SocketIO(host=self.__config.streaming.host, 
-            port=self.__config.streaming.port, 
-            Namespace=LoggingNamespace, 
-            wait_for_connection=self.wait_for_connection,
-            params={'username': self.__config.streaming.user})
-        #self.socketIO.wait(seconds=1)
-
+        #while True:
+        data_auth = {'username': self.__config.streaming.username, 'password': self.__config.streaming.password}
+        self.socketIO = SocketIO(host=self.__config.streaming.host, port=self.__config.streaming.port, Namespace=Namespace, wait_for_connection=self.wait_for_connection, params=data_auth)
+        self.socketIO.wait(seconds=1)
 
     def __check_socket(self):
         if self.socketIO and self.socketIO.connected == False:
@@ -44,7 +94,6 @@ class Streaming:
         try:
             self.__build()
             self.__check_socket()
-            self.__subscriber()
         except Exception as e:
             print(e)
 
@@ -58,10 +107,10 @@ class Streaming:
             jpeg = item.image.tobytes()
             jpeg = base64.b64encode(jpeg).decode('utf-8')
             image = "data:image/jpeg;base64,{}".format(jpeg)
-            item = {'image': True, 'source': item.source, 'buff': image, 'username': self.__config.streaming.user}
+            item = {'image': True, 'source': item.source, 'buff': image, 'username': self.__config.streaming.username}
             self.__check_socket()
             if self.socketIO:
-                self.socketIO.emit('on_frame', item, callback=self.__on_bbb_response)
+                self.socketIO.emit('handle_frame', item, callback=self.__on_bbb_response)
         except Exception as e:
             print(e)
 
@@ -78,7 +127,8 @@ class Streaming:
                 self.q.task_done()
 
     def put_nowait(self, item: StreamDTO = None) -> None:
-        if self.is_send_frame == 1:
+        global start_broadcasting
+        if start_broadcasting > 1:
             self.q.put_nowait(item)
             self.run()
             if self.waiting == True:
@@ -86,7 +136,8 @@ class Streaming:
                     self.condition.notify_all()
 
     def put(self, item: StreamDTO = None, block=True, timeout=None) -> None:
-        if self.is_send_frame == 1:
+        global start_broadcasting
+        if start_broadcasting > 1:
             self.q.put(item, block, timeout)
             self.run()
             if self.waiting == True:
@@ -103,20 +154,11 @@ class Streaming:
     def join(self) -> None:
         self.q.join()
     
-    def __subscriber(self):
-        self.__check_socket()
-        self.socketIO.on('on_transmit_frame', self.__on_transmit_frame)
-        self.socketIO.wait_for_callbacks(seconds=1)
-        self.socketIO.emit('on_subscriber', {'username': self.__config.streaming.user}, callback=self.__on_bbb_response)
-        self.socketIO.wait(seconds=1)
-    
-    def __on_transmit_frame(self, *args):
-        print("__on_transmit_frame", *args)
-        self.is_send_frame = int(*args)
-
     def __unsuscriber(self):
         if self.socketIO:
-            self.socketIO.emit('on_unsubscriber', { 'username' : self.__config.streaming.user }, callback=self.__on_bbb_response)
+            #self.socketIO.emit('on_unsubscriber', callback=self.__on_bbb_response)
+            self.socketIO.emit('unsubscriber', callback=self.__on_bbb_response)
+            self.socketIO.wait_for_callbacks(seconds=1)
             self.socketIO.disconnect()
 
     def stop(self):
@@ -128,7 +170,6 @@ class Streaming:
         self.q = None
         self.started = None
         self.socketIO = None
-        self.is_send_frame = None
         self.condition = None
         self.waiting = None
         self.wait_for_connection = None
