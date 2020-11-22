@@ -19,6 +19,7 @@ class GeneralDTO:
         self.onGuard = int(data_json["ON_GUARD"])
         self.minAreaObject = int(data_json["MIN_AREA_OBJECT"])
         self.delay = float(data_json["DELAY"])
+        self.delay_status = float(data_json["DELAY_STATUS"])
 
 class AlarmDTO:
     def __init__(self, data_json = {}):
@@ -26,6 +27,8 @@ class AlarmDTO:
         self.indicator = str(data_json["INDICATOR"])
         self.maxMessages = str(data_json["MAX_MESSAGES"])
         self.defaultMessage = str(data_json["DEFAULT_MESSAGE"])
+        self.delay = float(data_json["DELAY"])
+        self.delay_status = float(data_json["DELAY_STATUS"])
 
 class AwsDTO:
     def __init__(self, data_json = {}):
@@ -39,11 +42,14 @@ class CameraDTO:
         self.dimWidth = int(data_json["DIM_WIDTH"])
         self.dimHeight = int(data_json["DIM_HEIGHT"])
         self.cameraType = int(data_json["CAMERA_TYPE"])
+        self.defaultDim = int(data_json["DEFAULT_DIM"])
 
 class RecordDTO:
     def __init__(self, data_json = {}):
         self.fps = float(data_json["FPS"])
         self.maxTimeOutSeg = int(data_json["MAX_TIME_OUT_SEG"])
+        self.delay = float(data_json["DELAY"])
+        self.delay_status = float(data_json["DELAY_STATUS"])
 
 class StreamingDTO:
     def __init__(self, data_json = {}):
@@ -51,6 +57,8 @@ class StreamingDTO:
         self.port = int(data_json["PORT"])
         self.username = str(data_json["USERNAME"])
         self.password = str(data_json["PASSWORD"])
+        self.delay = float(data_json["DELAY"])
+        self.delay_status = float(data_json["DELAY_STATUS"])
 
 class ConfigDTO:
     def __init__(self, data_json = {}):

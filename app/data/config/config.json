@@ -3,13 +3,16 @@
         "MAX_MOVEMENTS": 3,
         "ON_GUARD": 1,
         "MIN_AREA_OBJECT": 1000,
-        "DELAY": 0.0
+        "DELAY": 0.01,
+        "DELAY_STATUS": 10.0
     },
     "ALARM": {
         "PHONE_NUMBER": "310XXXXXXX",
         "INDICATOR": "+57",
         "MAX_MESSAGES": 200,
-        "DEFAULT_MESSAGE": "SE HA DETECTADO UN MOVIMIENTO"
+        "DEFAULT_MESSAGE": "SE HA DETECTADO UN MOVIMIENTO",
+        "DELAY": 10.0,
+        "DELAY_STATUS": 20.0
     },
     "AWS": {
         "ACCESS_KEY": "",
@@ -20,16 +23,21 @@
     "CAMERA": {
         "DIM_WIDTH": 640,
         "DIM_HEIGHT": 480,
+        "DEFAULT_DIM": 2,
         "CAMERA_TYPE": 1
     },
     "RECORD": {
         "FPS": 10.0,
-        "MAX_TIME_OUT_SEG": 30
+        "MAX_TIME_OUT_SEG": 30,
+        "DELAY": 5.0,
+        "DELAY_STATUS": 20.0
     },
     "STREAMING": {
         "HOST": "0.0.0.0",
         "PORT": 5000,
         "USERNAME": "SUCAM",
-        "PASSWORD": "SUCAM"
+        "PASSWORD": "SUCAM",
+        "DELAY": 0.0,
+        "DELAY_STATUS": 20.0
     }
 }

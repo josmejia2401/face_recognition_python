@@ -29,8 +29,8 @@
         document.addEventListener("DOMContentLoaded", function (event) {
             const image_elem = document.getElementById("streamer-image");
             const text_elem = document.getElementById("streamer-text");
-
-            var socket = io.connect('http://localhost:5000?username=web&password=web', {
+            const host = window.location.protocol + '//' + window.location.hostname + ':' + window.location.port;
+            var socket = io.connect(host + '?username=web&password=web', {
                 reconnection: true,
                 forceNew: false
             });

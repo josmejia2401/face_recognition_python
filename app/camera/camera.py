@@ -29,9 +29,14 @@ class CameraAsync:
         self.__process_frame = ProcessFrame(self.__config)
         self.__process_frame.initialize()
         self.stream = cv2.VideoCapture(self.source)
-        if not self.__config.camera.dimHeight or not self.__config.camera.dimWidth:
-            self.__config.camera.dimHeight = int(self.stream.get(3))
-            self.__config.camera.dimWidth = int(self.stream.get(4))
+        if self.__config.camera.dimHeight == 0 or self.__config.camera.dimWidth == 0:
+            self.__config.camera.dimWidth = int(self.stream.get(3))
+            self.__config.camera.dimHeight = int(self.stream.get(4))
+            self.__config.camera.defaultDim = True
+        else:
+            self.__config.camera.defaultDim = False
+            self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, int(self.__config.camera.dimWidth))
+            self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, int(self.__config.camera.dimHeight))
     
     def initialize(self) -> None:
         self.__build()
@@ -49,9 +54,7 @@ class CameraAsync:
     def __update(self) -> None:
         while self.started == True and self.stream.isOpened() == True:
             (grabbed, frame) = self.stream.read()
-            while grabbed == False:
-                (grabbed, frame) = self.stream.read()
-            #with self.read_lock:
+            while grabbed == False: (grabbed, frame) = self.stream.read()
             self.__process(grabbed, frame)
     
     def __process(self, grabbed, frame):
@@ -61,7 +64,7 @@ class CameraAsync:
             self.grabbed1, self.frame1 = self.grabbed2, self.frame2
         self.grabbed2, self.frame2 = grabbed, frame
         frame_dto = FrameDTO(self.source, self.frame1, self.frame2)
-        self.__process_frame.put_nowait(frame_dto)
+        self.__process_frame.put_item(frame_dto)
         
     def read(self) -> any:
         try:

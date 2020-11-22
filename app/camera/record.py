@@ -2,22 +2,21 @@
 #!/usr/bin/python3.8
 # OpenCV 4.2, Raspberry pi 3/3b/4b - test on macOS
 import copy
-import boto3
 import datetime
 import cv2
+import time
 from dto.record import ConfigDTO, StreamDTO
+from camera.q import Q
 
-class Record:
+class Record(Q):
 
     def __init__(self, config: ConfigDTO = None):
         super().__init__()
         self.__config = copy.deepcopy(config)
+        self.out = None
         self.cont_frame = 0
         self.cont_frame_time_out = 0
         self.time_out_frame = 0
-        self.__build()
-
-    def __build(self):
         self.time_out_frame = int(self.__config.record.fps * 10) #10 segundos adicionales para grabar
 
     def __put_video_writter(self, source):
@@ -27,11 +26,6 @@ class Record:
         frameSize = (self.__config.camera.dimWidth, self.__config.camera.dimHeight)
         self.out = cv2.VideoWriter(filename, fourcc, self.__config.record.fps, frameSize)
     
-    def record(self, item: StreamDTO = None):
-        if self.cont_frame == 0:
-            self.__put_video_writter(item.source)
-        self.__write(item)
-        
     def __write(self, item: StreamDTO = None):
         self.cont_frame += 1
         if item.is_mov == True: 
@@ -55,15 +49,36 @@ class Record:
         return False
 
     def release(self):
-        print("release")
         if self.out is not None:
             self.out.release()
         self.cont_frame = 0
         self.cont_frame_time_out = 0
+
+    def process_item(self, item: StreamDTO = None) -> None:
+        try:
+            if item is None:
+                return
+            if self.cont_frame == 0:
+                self.__put_video_writter(item.source)
+            self.__write(item)
+        except Exception as e:
+            print("Record_process_item", e)
     
-    def __del__(self):
-        self.__config = None
-        self.cont_frame = None
-        self.cont_frame_time_out = None
-        self.out = None
-        self.time_out_frame = None
+    def process_status(self)-> None:
+        try:
+            if self.__config.record.delay_status > 0:
+                time.sleep(self.__config.record.delay_status)
+        except: pass
+        
+    def empty_queue_for_lock(self)-> None:
+        if self.__config.record.delay > 0:
+            time.sleep(self.__config.record.delay)
+        else:
+            self.apply_lock()
+
+    def initialize(self):
+        self.run_queue()
+
+    def stop(self) -> None:
+        self.stop_queue()
+        self.release()

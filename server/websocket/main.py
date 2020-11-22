@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #!/usr/bin/python3.8
 # OpenCV 4.2, Raspberry pi 3/3b/4b - test on macOS
-from flask import Flask, request
+from flask import Flask, request, render_template
 from flask_socketio import SocketIO
 from flask_socketio import send, emit, disconnect
 from dto.dto import UserDTO
@@ -12,6 +12,9 @@ app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, cors_allowed_origins="*")
 manage_session = ManageSession()
 
+@app.route('/')
+def start():
+    return render_template('index.html')
 
 @socketio.on('connect')
 def on_connect():
@@ -27,7 +30,7 @@ def on_connect():
             global manage_session
             user_find = manage_session.add_username(user_dto, session_id)
             length_users = manage_session.get_length_users()
-            emit('stream_video', str(length_users), broadcast=True, json=True, include_self=True)
+            emit('stream_video', str(length_users), broadcast=True, json=False, include_self=True)
     except KeyError as e:
         disconnect(session_id)
         print(e)
@@ -51,7 +54,7 @@ def on_subscriber():
             global manage_session
             user_find = manage_session.add_username(user_dto, session_id)
             length_users = manage_session.get_length_users()
-            emit('stream_video', str(length_users), broadcast=True, json=True, include_self=True)
+            emit('stream_video', str(length_users), broadcast=True, json=False, include_self=True)
     except KeyError as e:
         disconnect(session_id)
         print(e)
@@ -96,7 +99,7 @@ def on_unsubscriber():
                 disconnect(s)
             user_find.sessions = []
             length_users = manage_session.get_length_users()
-            emit('stream_video', str(length_users), broadcast=True, json=True, include_self=True)
+            emit('stream_video', str(length_users), broadcast=True, json=False, include_self=True)
     except KeyError as e:
         disconnect(session_id)
         print(e)

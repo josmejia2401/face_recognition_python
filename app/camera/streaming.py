@@ -5,6 +5,8 @@ from socketIO_client import SocketIO, BaseNamespace#, LoggingNamespace
 from dto.record import StreamDTO, ConfigDTO
 import base64
 import copy
+from camera.q import Q
+import time
 
 class Namespace(BaseNamespace):
 
@@ -29,15 +31,14 @@ class Namespace(BaseNamespace):
         print('[Disconnected]')
 
 #https://pypi.org/project/socketIO-client/
-class Streaming:
+class Streaming(Q):
 
     stop_transmission = True
 
     def __init__(self, config: ConfigDTO = None, wait_for_connection = True):
-        super().__init__()
+        super().__init__(thread_status = True)
         self.__config = copy.deepcopy(config)
         self.wait_for_connection = wait_for_connection
-        self.current_intents = 0
         self.socketIO = None
         self.data_auth = {'username': self.__config.streaming.username, 'password': self.__config.streaming.password}
     
@@ -67,13 +68,12 @@ class Streaming:
             raise e
     
     def __on_response(self, *args):
-        #print('__on_response', args)
         pass
 
     def __subscribe(self):
         if self.socketIO:
             self.socketIO.emit('subscriber', callback=self.__on_response)
-            self.socketIO.wait_for_callbacks(seconds=0.01)
+            self.socketIO.wait_for_callbacks(seconds=1)
 
     def __unsuscriber(self):
         if self.socketIO:
@@ -81,32 +81,37 @@ class Streaming:
             self.socketIO.wait_for_callbacks(seconds=1)
             self.socketIO.disconnect()
 
-    def initialize(self):
-        self.__connect(force=False)
-
-    def send_data(self, item: StreamDTO = None) -> None:
+    def process_item(self, item: StreamDTO = None) -> None:
         try:
-            self.current_intents += 1
-            if self.current_intents > 250:
-                self.current_intents = 0
-                self.__connect(force=True)
-            else:
-                self.__connect(force=False)
             if Streaming.stop_transmission == True:
                 return
             if item is None:
                 return
             item = self.__build_data(item)
+            self.__connect(force=False)
             self.socketIO.emit('cv-data', item, callback=self.__on_response)
         except Exception as e:
-            print(e)
+            print("Streaming__process_item", e)
+        
+    def empty_queue_for_lock(self)-> None:
+        if self.__config.streaming.delay > 0:
+            time.sleep(self.__config.streaming.delay)
+        else:
+            self.apply_lock()
 
-    def stop(self):
+    def process_status(self)-> None:
+        try:
+            self.__connect(force=True)
+            if self.__config.streaming.delay_status > 0:
+                time.sleep(self.__config.streaming.delay_status)
+        except Exception as e:
+            print("Streaming__process_status", e)
+
+    def initialize(self):
+        self.__connect(force=False)
+        self.run_queue()
+
+    def stop(self) -> None:
+        self.stop_queue()
         self.__unsuscriber()
         Streaming.stop_transmission = True
-
-    def __del__(self):
-        self.__config = None
-        self.wait_for_connection = None
-        self.socketIO = None
-        self.data_auth = None
