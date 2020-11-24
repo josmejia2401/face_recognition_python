@@ -1,6 +1,6 @@
 #!/usr/bin/python3.8
 from flask import Flask, request, Response, render_template
-import server.controllers_async as c
+import server.webserver.controllers as c
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
@@ -9,17 +9,17 @@ app.config['JSON_AS_ASCII'] = False
 def index():
     return render_template('index.html')
 
-@app.route('/ms-sudo-cam/api/v1/video-feed/<int:type_cam>', methods=["GET", "POST"])
-def video_feed(type_cam):
+@app.route('/video-feed', methods=["GET", "POST"])
+def video_feed():
     return Response(c._video_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/ms-sudo-cam/api/v1/video-stop', methods=["GET", "POST"])
+@app.route('/video-stop', methods=["GET", "POST"])
 def video_stop():
     return c._video_stop()
 
-@app.route('/ms-sudo-cam/api/v1/video-stop-all', methods=["GET", "POST"])
-def video_stop_all():
-    return c._video_stop_all()
+@app.route('/video-reset', methods=["GET", "POST"])
+def video_reset():
+    return c._video_reset()
 
 @app.after_request
 def after_request(response):

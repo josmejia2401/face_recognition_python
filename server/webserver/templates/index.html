@@ -1,35 +1,93 @@
 <!doctype html>
 <html lang="en">
+
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+        integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
     <title>Live Streaming Demonstration</title>
-    <script language="JavaScript">
-        window.onbeforeunload = function (e) {
-            var message = "Your confirmation message goes here.",
-            e = e || window.event;
-            // For IE and Firefox
-            if (e) {
-                e.returnValue = message;
-            }
-            // For Safari
-            return message;
-        };
-    </script>
 </head>
 
 <body>
     <div class="container">
         <div class="row">
-            <div class="col-lg-8  offset-lg-2">
-                <h3 class="mt-5">Live Streaming</h3>
-                <img src="{{ url_for('video_feed', type_cam=2) }}" width="100%">
+            <div class="col-lg-8 offset-lg-2">
+                <h1 class="mt-5">Live Streaming</h1>
+                <input class="form-control" id="id_fld_response" type="text" placeholder="" style="margin-top: 10px; margin-bottom: 10px;" disabled>
+                <button id="id_btn_view" type="button" class="btn btn-primary">View</button>
+                <button id="id_btn_stop" type="button" class="btn btn-danger">Stop</button>
+                <button id="id_btn_reset" type="button" class="btn btn-warning">Reset</button>
+                <h3 class="mt-5">Resource</h3>
+                <img src="{{ url_for('video_feed') }}" width="100%">
             </div>
         </div>
     </div>
+    <script type="text/javascript" charset="utf-8">
+        document.addEventListener("DOMContentLoaded", function (event) {
+            const id_btn_stop = document.getElementById("id_btn_stop");
+            const id_btn_reset = document.getElementById("id_btn_reset");
+            const id_btn_view = document.getElementById("id_btn_view");
+            const id_fld_response = document.getElementById("id_fld_response");
+
+            id_btn_view.addEventListener("click", function() {
+                window.location.reload();
+            });
+
+            id_btn_stop.addEventListener("click", function() {
+                fetchVideoStop().then(response => {
+                    id_fld_response.value = response;
+                }).catch(error => {
+                    id_fld_response.value = error.message;
+                });
+            });
+
+            id_btn_reset.addEventListener("click", function() {
+                fetchVideoReset().then(response => {
+                    id_fld_response.value = response;
+                }).catch(error => {
+                    id_fld_response.value = error.message;
+                });
+            });
+
+            async function fetchVideoStop() {
+                const response = await fetch('/video-stop');
+                if (!response.ok) {
+                    const message = `An error has occured: ${response.status}`;
+                    throw new Error(message);
+                }
+                //const r = await response.json();
+                //return r;
+                const text = await response.text();
+                return text;
+            }
+
+            async function fetchVideoReset() {
+                const response = await fetch('/video-reset');
+                if (!response.ok) {
+                    const message = `An error has occured: ${response.status}`;
+                    throw new Error(message);
+                }
+                //const r = await response.json();
+                //return r;
+                const text = await response.text();
+                return text;
+            }
+
+            function showADialog(e){
+                var confirmationMessage = 'Your message here';
+                (e || window.event).returnValue = confirmationMessage;     // Gecko and Trident
+                return confirmationMessage;                                // Gecko and WebKit
+            }
+            window.addEventListener("beforeunload", async function (e) {
+                const r = await fetchVideoStop();
+                //return showADialog(e);  
+            });
+
+        });
+    </script>   
 </body>
 
 </html>

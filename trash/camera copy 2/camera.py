@@ -5,10 +5,9 @@ import cv2
 from threading import Thread, Lock
 import time
 #internal
-from app.camera.frame import Frame
-from app.utils.settings import get_config
-from app.dto.record import FrameDTO, ConfigDTO
-from app.camera.process_frame import ProcessFrame
+from utils.settings import get_config
+from dto.record import FrameDTO, ConfigDTO
+from camera.process_frame import ProcessFrame
 
 class CameraAsync:
 
@@ -17,13 +16,11 @@ class CameraAsync:
         self.name = name
         self.source = source 
         self.__config = ConfigDTO(get_config())
-        self.__frame = Frame(self.__config)
         self.started = False
         self.read_lock = Lock()
         self.stream = None
         self.grabbed1, self.frame1 = None, None
         self.grabbed2, self.frame2 = None, None
-        self.image = None
         self.thread = None
         
     def __build(self) -> None:
@@ -35,11 +32,11 @@ class CameraAsync:
         if self.__config.camera.dimHeight == 0 or self.__config.camera.dimWidth == 0:
             self.__config.camera.dimWidth = int(self.stream.get(3))
             self.__config.camera.dimHeight = int(self.stream.get(4))
-            self.__config.camera.applyResize = False
+            self.__config.camera.defaultDim = True
         else:
-            self.__config.camera.applyResize = True
-            #self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, int(self.__config.camera.dimWidth))
-            #self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, int(self.__config.camera.dimHeight))
+            self.__config.camera.defaultDim = False
+            self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, int(self.__config.camera.dimWidth))
+            self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, int(self.__config.camera.dimHeight))
     
     def initialize(self) -> None:
         self.__build()
@@ -60,31 +57,27 @@ class CameraAsync:
             while grabbed == False: (grabbed, frame) = self.stream.read()
             self.__process(grabbed, frame)
     
-    def __set_frame(self, grabbed, frame) -> None:
+    def __process(self, grabbed, frame):
         if self.frame1 is None or self.frame2 is None:
             self.grabbed1, self.frame1 = grabbed, frame
         else:
             self.grabbed1, self.frame1 = self.grabbed2, self.frame2
         self.grabbed2, self.frame2 = grabbed, frame
-
-    def __process(self, grabbed, frame):
-        self.__set_frame(grabbed, frame)
-        if self.__config.camera.applyResize == True:
-            self.frame2 = self.__frame.resize(self.frame2)
-        with self.read_lock:
-            _, self.image = self.__frame.frame_to_image(self.frame2)
-        frame_dto = FrameDTO(self.source, self.frame1, self.frame2, self.image)
+        frame_dto = FrameDTO(self.source, self.frame1, self.frame2)
         self.__process_frame.put_item(frame_dto)
         
     def read(self) -> any:
         try:
             self.read_lock.acquire()
-            frame = self.image.copy()
+            frame1 = self.frame1.copy()
+            grabbed1 = self.grabbed1
+            frame2 = self.frame2.copy()
+            grabbed2 = self.grabbed2
         except Exception as e:
-            frame = None
+            grabbed1, frame1, grabbed2, frame2 = False, None, False, None
         finally:
             self.read_lock.release()
-        return frame
+        return grabbed1, frame1, grabbed2, frame2
 
     def stop(self) -> any:
         try:
@@ -100,3 +93,17 @@ class CameraAsync:
     def release(self):
         if self.stream:
             self.stream.release()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        print("exit")
+    
+    def __del__(self):
+        self.started = None
+        self.grabbed1, self.frame1 = None, None
+        self.grabbed2, self.frame2 = None, None
+        self.stream = None
+        self.name = None
+        self.source = None
+        self.__config = None
+        self.read_lock = None
+        self.thread = None

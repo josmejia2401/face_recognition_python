@@ -1,5 +1,5 @@
 import json
-from utils.dir import get_data_config
+from app.utils.dir import get_data_config
 
 def get_config():
     dir = get_data_config("config.json")

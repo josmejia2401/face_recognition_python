@@ -8,10 +8,11 @@ class StreamDTO:
         self.image = image
     
 class FrameDTO:
-    def __init__(self, source, frame1, frame2):
+    def __init__(self, source, frame1, frame2, image):
         self.source = source
         self.frame1 = frame1
         self.frame2 = frame2
+        self.image = image
 #config
 class GeneralDTO:
     def __init__(self, data_json = {}):
@@ -42,7 +43,7 @@ class CameraDTO:
         self.dimWidth = int(data_json["DIM_WIDTH"])
         self.dimHeight = int(data_json["DIM_HEIGHT"])
         self.cameraType = int(data_json["CAMERA_TYPE"])
-        self.defaultDim = int(data_json["DEFAULT_DIM"])
+        self.applyResize = False
 
 class RecordDTO:
     def __init__(self, data_json = {}):

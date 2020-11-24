@@ -4,7 +4,7 @@
 import cv2
 import time
 import copy
-from app.dto.record import ConfigDTO
+from dto.record import ConfigDTO
 
 class Frame:
 

@@ -5,7 +5,7 @@ from threading import Thread, Condition, Lock
 import queue
 import copy
 from abc import ABC, abstractmethod
-from app.dto.record import FrameDTO
+from dto.record import FrameDTO
 
 class Q(ABC):
 

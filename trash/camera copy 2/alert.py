@@ -3,8 +3,8 @@
 # OpenCV 4.2, Raspberry pi 3/3b/4b - test on macOS
 import copy
 import boto3
-from app.dto.record import ConfigDTO, StreamDTO
-from app.camera.q import Q
+from dto.record import ConfigDTO, StreamDTO
+from camera.q import Q
 import time
 
 class Alert(Q):

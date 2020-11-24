@@ -4,8 +4,8 @@
 from flask import Flask, request, render_template
 from flask_socketio import SocketIO
 from flask_socketio import send, emit, disconnect
-from dto.dto import UserDTO
-from manage_session import ManageSession
+from server.websocket.dto.dto import UserDTO
+from server.websocket.manage_session import ManageSession
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'

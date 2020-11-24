@@ -1,4 +1,4 @@
-from dto.dto import UserDTO
+from server.websocket.dto.dto import UserDTO
 
 class ManageSession:
  

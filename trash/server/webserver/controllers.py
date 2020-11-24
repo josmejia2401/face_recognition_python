@@ -1,15 +1,15 @@
 #!/usr/bin/python3.8
-from core.kernel import Kernel
+from app.camera.kernel import Kernel
 
-_k = Kernel(src=0)
+_k = Kernel()
 _k.initialize()
 
 def _video_feed() -> any:
     try:
         global _k
-        if _k is None:
-            _k = Kernel()
-        return _k.generated_stream()
+        if _k:
+            return _k.get_frame()
+        return None
     except ValueError as e:
         return str(e), 400
     except Exception as e:
@@ -19,23 +19,25 @@ def _video_feed() -> any:
 def _video_stop() -> any:
     try:
         global _k
-        if _k is None:
+        if _k:
+            _k.stop_streaming()
             return "OK", 200
-        _k.stop()
-        return "OK", 200
+        return None
     except ValueError as e:
         return str(e), 400
     except Exception as e:
         print(e)
         return str(e), 500
 
-def _video_stop_all() -> any:
+def _video_reset() -> any:
     try:
         global _k
-        if _k is None:
+        if _k:
+            _k.stop()
+            _k = Kernel()
+            _k.initialize()
             return "OK", 200
-        _k.stop_all()
-        return "OK", 200
+        return None
     except ValueError as e:
         return str(e), 400
     except Exception as e:

@@ -5,8 +5,8 @@ import copy
 import datetime
 import cv2
 import time
-from app.dto.record import ConfigDTO, StreamDTO
-from app.camera.q import Q
+from dto.record import ConfigDTO, StreamDTO
+from camera.q import Q
 
 class Record(Q):
 
